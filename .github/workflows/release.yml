@@ -10,69 +10,55 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: mc-cli-linux
-            executable_name: mc-cli
-          - os: windows-latest
-            artifact_name: mc-cli-windows
-            executable_name: mc-cli.exe
-    runs-on: ${{ matrix.os }}
-
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
-
-      - name: Build executable
-        run: |
-          pyinstaller --onefile --name mc-cli cli.py
-
-      - name: Rename artifact on Windows
-        if: runner.os == 'Windows'
-        run: |
-          Copy-Item dist\mc-cli.exe dist\${{ matrix.executable_name }}
-
-      - name: Rename artifact on Linux
-        if: runner.os == 'Linux'
-        run: |
-          cp dist/mc-cli dist/${{ matrix.executable_name }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - run: python -m pip install --upgrade pip pyinstaller
+      - run: pyinstaller --onefile --name mc-cli cli.py
+      - run: |
+          mkdir -p release-assets
+          cp dist/mc-cli release-assets/mc-cli
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.executable_name }}
+          name: mc-cli-linux
+          path: release-assets/mc-cli
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip pyinstaller
+      - run: pyinstaller --onefile --name mc-cli cli.py
+      - run: |
+          New-Item -ItemType Directory -Force release-assets | Out-Null
+          Copy-Item dist\mc-cli.exe release-assets\mc-cli.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mc-cli-windows
+          path: release-assets/mc-cli.exe
 
   release:
-    needs: build
+    needs:
+      - build-linux
+      - build-windows
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download Linux artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: mc-cli-linux
           path: release-assets
-
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: mc-cli-windows
           path: release-assets
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           files: |
             release-assets/mc-cli
