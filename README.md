@@ -56,6 +56,8 @@
 ./mc --ping localhost 25565
 ```
 
+如果你传入的是带空格的参数（例如把 `localhost:` 和 `25565` 分成两段，或把端口写成 `localhost: 25565`），程序会把它误当成主机名，导致 `getaddrinfo failed`。请使用标准格式：`./mc --ping localhost 25565`。
+
 输出会包含：
 
 - 在线状态
