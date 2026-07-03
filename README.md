@@ -148,11 +148,18 @@
 python3 cli.py localhost 25565
 ```
 
-### 可执行脚本
+### Linux 可执行文件
+
+仓库也可以直接打包成单文件可执行程序：
 
 ```bash
-chmod +x mc
-./mc localhost 25565
+./dist/mc-cli localhost 25565
+```
+
+### 重新打包
+
+```bash
+pyinstaller --onefile --name mc-cli cli.py
 ```
 
 ### 语法检查
