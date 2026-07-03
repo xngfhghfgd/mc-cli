@@ -168,6 +168,23 @@ pyinstaller --onefile --name mc-cli cli.py
 python3 -m py_compile cli.py client.py protocol.py debug_send.py
 ```
 
+
+## 自动构建与发布
+
+仓库已经配置 GitHub Actions：
+
+- 推送 `v*` 标签时自动构建
+- 产出 Linux 可执行文件
+- 产出 Windows `.exe`
+- 自动附加到 GitHub Release
+
+手动发布示例：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 ## 仓库说明
 
 这个仓库已经整理为可发布状态，适合作为：
