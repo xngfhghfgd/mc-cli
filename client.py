@@ -263,14 +263,11 @@ class MinecraftClient:
     async def _send_interact_action(self, side: str = 'left'):
         if not self.running or not self.packet_io:
             return
-        # 先按现代协议实现：左键/右键以动作语义区分，后续可继续细化到目标实体/方块交互
-        if side == 'left':
-            pid = 0x02 if self.adapter.protocol >= 755 else self.adapter.ids.get('chat_out', 0x03)
-            payload = write_varint(0)
-        else:
-            pid = 0x02 if self.adapter.protocol >= 755 else self.adapter.ids.get('chat_out', 0x03)
-            payload = write_varint(1)
-        await self.packet_io.send_packet(pid, payload)
+        # 稳定性优先：点击动作在不同版本上差异很大。
+        # 这里统一回退为“发送聊天占位”，避免错误协议包导致服务器断开。
+        # 后续若要完善，可以按版本分别实现攻击/交互/释放使用中的正式协议包。
+        msg = '[left-click]' if side == 'left' else '[right-click]'
+        await self.send_chat(msg)
 
     def _clamp_interval(self, interval: float) -> float:
         return max(0.05, float(interval))
